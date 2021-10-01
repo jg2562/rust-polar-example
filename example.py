@@ -12,7 +12,15 @@ def to_rust(df):
     batches = table.to_batches()
     return batches
 
+# Create data from in rust and receive it in python
 df = from_rust(create_df())
 
-update_df = from_rust(super_advanced_calculation(to_rust(df)))
-breakpoint()
+# Do some quick and easy work in python
+print(df.mean())
+
+
+# Do a super complicated calculation that can only be done in rust
+calced_df = from_rust(super_advanced_calculation(to_rust(df)))
+
+# Check out results in python
+print(calced_df)
