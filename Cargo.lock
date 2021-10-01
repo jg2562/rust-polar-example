@@ -59,17 +59,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arrow2"
-version = "0.5.3"
-source = "git+https://github.com/ritchie46/arrow2?branch=dev#142f05a50bf4554a1ec8c7bafcf77218ad0aefc3"
-dependencies = [
- "chrono",
- "hash_hasher",
- "num-traits",
- "simdutf8",
-]
-
-[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -646,7 +635,7 @@ version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4bebe1310113f2330e92faf7c67634b69a3c30fede04fe5236a258afb43d9d5f"
 dependencies = [
- "arrow2 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "arrow2",
  "num",
  "thiserror",
 ]
@@ -659,7 +648,7 @@ checksum = "8da53d641dcaebe2a3b6cc442f657fd83709cb22a67677eabeb24cb004ebd04e"
 dependencies = [
  "ahash",
  "anyhow",
- "arrow2 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "arrow2",
  "chrono",
  "hashbrown",
  "itertools",
@@ -683,7 +672,7 @@ checksum = "708e3bf4d8866e4c8a2defe36d7a5359d69e3884a9da0a9cc1f2e2eac194177b"
 dependencies = [
  "ahash",
  "anyhow",
- "arrow2 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "arrow2",
  "csv-core",
  "dirs 3.0.2",
  "lazy_static",
@@ -926,12 +915,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "simdutf8"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c970da16e7c682fa90a261cf0724dee241c9f7831635ecc4e988ae8f3b505559"
-
-[[package]]
 name = "smallvec"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1075,7 +1058,6 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 name = "zero-copy"
 version = "0.1.0"
 dependencies = [
- "arrow2 0.5.3 (git+https://github.com/ritchie46/arrow2?branch=dev)",
  "polars",
  "polars-core",
  "pyo3",
