@@ -1,10 +1,10 @@
 use pyo3::prelude::*;
-use arrow::array::ArrayRef;
-// use arrow::ffi::{Ffi_ArrowArray, Ffi_ArrowSchema};
-use arrow::ffi;
-use arrow::record_batch::RecordBatch;
-use polars::prelude::ArrowField;
+use arrow2::array::ArrayRef;
+use polars::frame::DataFrame;
+use arrow2::ffi;
+use arrow2::record_batch::RecordBatch;
 use pyo3::ffi::Py_uintptr_t;
+use arrow2::datatypes::{Field as ArrowField};
 
 /// Arrow array to Python.
 pub(crate) fn to_py_array(array: ArrayRef, py: Python, pyarrow: &PyModule) -> PyResult<PyObject> {
@@ -52,4 +52,16 @@ pub(crate) fn to_py_rb(rb: &RecordBatch, py: Python, pyarrow: &PyModule) -> PyRe
         .call_method1("from_arrays", (arrays, names))?;
 
     Ok(record.to_object(py))
+}
+
+pub fn to_arrow(df: DataFrame) -> PyResult<Vec<PyObject>> {
+	let gil = Python::acquire_gil();
+	let py = gil.python();
+	let pyarrow = py.import("pyarrow")?;
+
+	let rbs = df
+		.iter_record_batches()
+		.map(|rb| to_py_rb(&rb, py, pyarrow))
+		.collect::<PyResult<_>>()?;
+	Ok(rbs)
 }

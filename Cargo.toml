@@ -14,6 +14,6 @@ name = "tapki_zero"
 crate-type = ["cdylib"]
 
 [dependencies]
-arrow = { package = "arrow2", git = "https://github.com/ritchie46/arrow2", branch="dev", default-features = false }
+arrow2 = {git = "https://github.com/ritchie46/arrow2", branch="dev", default-features = false }
 pyo3 = "*"
 polars = {version="*", features=["serde"]}
