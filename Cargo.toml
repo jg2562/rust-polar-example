@@ -14,7 +14,7 @@ name = "tapki_zero"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "*"
+pyo3 = {version="*", features=["extension-module"]}
 polars = {version="*", features=["serde"]}
 polars-core = {version="*", features=["serde"]}
 thiserror = {version="*"}
