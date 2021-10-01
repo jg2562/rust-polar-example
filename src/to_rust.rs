@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 use polars_core::prelude::Arc;
 use polars_core::utils::arrow::{
     array::ArrayRef,
@@ -10,6 +12,7 @@ use pyo3::prelude::*;
 
 
 use polars::prelude::PolarsError;
+use polars::frame::DataFrame;
 use polars_core::error::ArrowError;
 use pyo3::{exceptions::PyRuntimeError};
 use thiserror::Error;
@@ -31,7 +34,7 @@ impl std::convert::From<PyPolarsEr> for PyErr {
 }
 
 
-pub fn array_to_rust(obj: &PyAny) -> PyResult<ArrayRef> {
+fn array_to_rust(obj: &PyAny) -> PyResult<ArrayRef> {
     // prepare a pointer to receive the Array struct
     let array = Box::new(ffi::Ffi_ArrowArray::empty());
     let schema = Box::new(ffi::Ffi_ArrowSchema::empty());
@@ -51,7 +54,7 @@ pub fn array_to_rust(obj: &PyAny) -> PyResult<ArrayRef> {
     Ok(array.into())
 }
 
-pub fn to_rust_rb(rb: &[&PyAny]) -> PyResult<Vec<RecordBatch>> {
+fn to_rust_rb(rb: &[&PyAny]) -> PyResult<Vec<RecordBatch>> {
     let schema = rb
         .get(0)
         .ok_or_else(|| PyPolarsEr::Other("empty table".into()))?
@@ -85,4 +88,11 @@ pub fn to_rust_rb(rb: &[&PyAny]) -> PyResult<Vec<RecordBatch>> {
         .into_iter()
         .map(|columns| RecordBatch::try_new(schema.clone(), columns).unwrap())
         .collect())
+}
+
+
+pub fn to_rust_df(rb: Vec<&PyAny>) -> PyResult<DataFrame> {
+	let batches = to_rust_rb(&rb)?;
+	let df = DataFrame::try_from(batches).map_err(PyPolarsEr::from)?;
+	Ok(df)
 }
