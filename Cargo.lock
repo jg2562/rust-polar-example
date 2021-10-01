@@ -1079,4 +1079,5 @@ dependencies = [
  "polars",
  "polars-core",
  "pyo3",
+ "thiserror",
 ]

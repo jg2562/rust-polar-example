@@ -1,4 +1,3 @@
-use crate::error::PyPolarsEr;
 use polars_core::prelude::Arc;
 use polars_core::utils::arrow::{
     array::ArrayRef,
@@ -8,6 +7,29 @@ use polars_core::utils::arrow::{
 };
 use pyo3::ffi::Py_uintptr_t;
 use pyo3::prelude::*;
+
+
+use polars::prelude::PolarsError;
+use polars_core::error::ArrowError;
+use pyo3::{exceptions::PyRuntimeError};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum PyPolarsEr {
+    #[error(transparent)]
+    Any(#[from] PolarsError),
+    #[error("{0}")]
+    Other(String),
+    #[error(transparent)]
+    ArrowError(#[from] ArrowError),
+}
+
+impl std::convert::From<PyPolarsEr> for PyErr {
+    fn from(err: PyPolarsEr) -> PyErr {
+        PyRuntimeError::new_err(format!("{:?}", err))
+    }
+}
+
 
 pub fn array_to_rust(obj: &PyAny) -> PyResult<ArrayRef> {
     // prepare a pointer to receive the Array struct

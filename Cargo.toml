@@ -18,3 +18,4 @@ arrow2 = {git = "https://github.com/ritchie46/arrow2", branch="dev", default-fea
 pyo3 = "*"
 polars = {version="*", features=["serde"]}
 polars-core = {version="*", features=["serde"]}
+thiserror = {version="*"}

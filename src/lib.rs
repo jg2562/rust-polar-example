@@ -1,4 +1,5 @@
 mod to_py;
+mod to_rust;
 
 use polars::{prelude::*, df};
 use pyo3::prelude::*;
