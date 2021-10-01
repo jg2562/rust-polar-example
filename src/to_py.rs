@@ -1,10 +1,8 @@
-use pyo3::prelude::*;
-use arrow2::array::ArrayRef;
+use polars::prelude::ArrowField;
 use polars::frame::DataFrame;
-use arrow2::ffi;
-use arrow2::record_batch::RecordBatch;
+use polars_core::utils::arrow::{array::ArrayRef, ffi, record_batch::RecordBatch};
 use pyo3::ffi::Py_uintptr_t;
-use arrow2::datatypes::{Field as ArrowField};
+use pyo3::prelude::*;
 
 /// Arrow array to Python.
 pub(crate) fn to_py_array(array: ArrayRef, py: Python, pyarrow: &PyModule) -> PyResult<PyObject> {
