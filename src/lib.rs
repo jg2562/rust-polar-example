@@ -3,7 +3,7 @@ mod to_rust;
 
 use polars::{prelude::*, df};
 use pyo3::prelude::*;
-use crate::to_py::to_arrow;
+use crate::to_py::to_py_arrow;
 
 
 #[pyfunction]
@@ -12,7 +12,7 @@ fn create_df() -> PyResult<Vec<PyObject>> {
 		"A" => &[1,2,3],
 		"B" => &[4,5,6]
 	).unwrap();
-	to_arrow(df)
+	to_py_arrow(df)
 }
 
 #[pymodule]

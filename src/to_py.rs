@@ -5,7 +5,7 @@ use pyo3::ffi::Py_uintptr_t;
 use pyo3::prelude::*;
 
 /// Arrow array to Python.
-pub(crate) fn to_py_array(array: ArrayRef, py: Python, pyarrow: &PyModule) -> PyResult<PyObject> {
+fn to_py_array(array: ArrayRef, py: Python, pyarrow: &PyModule) -> PyResult<PyObject> {
 	let array_ptr = Box::new(ffi::Ffi_ArrowArray::empty());
 	let schema_ptr = Box::new(ffi::Ffi_ArrowSchema::empty());
 
@@ -34,7 +34,7 @@ pub(crate) fn to_py_array(array: ArrayRef, py: Python, pyarrow: &PyModule) -> Py
 }
 
 /// RecordBatch to Python.
-pub(crate) fn to_py_rb(rb: &RecordBatch, py: Python, pyarrow: &PyModule) -> PyResult<PyObject> {
+fn to_py_rb(rb: &RecordBatch, py: Python, pyarrow: &PyModule) -> PyResult<PyObject> {
 	let mut arrays = Vec::with_capacity(rb.num_columns());
 	let mut names = Vec::with_capacity(rb.num_columns());
 
@@ -52,7 +52,7 @@ pub(crate) fn to_py_rb(rb: &RecordBatch, py: Python, pyarrow: &PyModule) -> PyRe
 	Ok(record.to_object(py))
 }
 
-pub fn to_arrow(df: DataFrame) -> PyResult<Vec<PyObject>> {
+pub fn to_py_arrow(df: DataFrame) -> PyResult<Vec<PyObject>> {
 	let gil = Python::acquire_gil();
 	let py = gil.python();
 	let pyarrow = py.import("pyarrow")?;
