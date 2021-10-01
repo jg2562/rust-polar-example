@@ -63,17 +63,3 @@ pub fn to_arrow(df: DataFrame) -> PyResult<Vec<PyObject>> {
 		.collect::<PyResult<_>>()?;
 	Ok(rbs)
 }
-
-pub fn to_py_df(df: DataFrame) -> PyResult<PyObject> {
-	let gil = Python::acquire_gil();
-	let py = gil.python();
-	let pyarrow = py.import("polars")?;
-
-	let rbs = df
-		.iter_record_batches()
-		.map(|rb| to_py_rb(&rb, py, pyarrow))
-		.collect::<PyResult<_>>()?;
-
-	Ok(rbs)
-}
-
