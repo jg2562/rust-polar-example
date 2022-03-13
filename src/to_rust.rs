@@ -10,11 +10,10 @@ use polars_core::utils::arrow::{
 use pyo3::ffi::Py_uintptr_t;
 use pyo3::prelude::*;
 
-
-use polars::prelude::PolarsError;
 use polars::frame::DataFrame;
+use polars::prelude::PolarsError;
 use polars_core::error::ArrowError;
-use pyo3::{exceptions::PyRuntimeError};
+use pyo3::exceptions::PyRuntimeError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -32,7 +31,6 @@ impl std::convert::From<PyPolarsEr> for PyErr {
         PyRuntimeError::new_err(format!("{:?}", err))
     }
 }
-
 
 fn array_to_rust(obj: &PyAny) -> PyResult<ArrayRef> {
     // prepare a pointer to receive the Array struct
@@ -90,9 +88,8 @@ fn to_rust_rb(rb: &[&PyAny]) -> PyResult<Vec<RecordBatch>> {
         .collect())
 }
 
-
 pub fn to_rust_df(rb: Vec<&PyAny>) -> PyResult<DataFrame> {
-	let batches = to_rust_rb(&rb)?;
-	let df = DataFrame::try_from(batches).map_err(PyPolarsEr::from)?;
-	Ok(df)
+    let batches = to_rust_rb(&rb)?;
+    let df = DataFrame::try_from(batches).map_err(PyPolarsEr::from)?;
+    Ok(df)
 }
