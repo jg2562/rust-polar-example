@@ -1,9 +1,10 @@
 mod to_py;
 mod to_rust;
+mod error;
 
 use polars::{prelude::*, df};
 use pyo3::prelude::*;
-use crate::to_py::to_py_arrow;
+use crate::to_py::df_to_py;
 use crate::to_rust::to_rust_df;
 
 
@@ -13,7 +14,7 @@ fn create_df() -> PyResult<Vec<PyObject>> {
 		"A" => &[1,2,3],
 		"B" => &[4,5,6]
 	).unwrap();
-	to_py_arrow(df)
+	df_to_py(df)
 }
 
 fn calculation(series: &Series) -> Series {
@@ -22,9 +23,9 @@ fn calculation(series: &Series) -> Series {
 
 #[pyfunction]
 fn super_advanced_calculation(py_batches: Vec<&PyAny>) -> PyResult<Vec<PyObject>> {
-	let mut df = to_rust_df(py_batches)?;
+	let mut df = to_rust_df(&py_batches)?;
 	df.apply("B", calculation).unwrap();
-	to_py_arrow(df)
+	df_to_py(df)
 }
 
 

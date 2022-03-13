@@ -1,11 +1,12 @@
-use polars::frame::DataFrame;
 use polars::prelude::ArrowField;
-use polars_core::utils::arrow::{array::ArrayRef, ffi, record_batch::RecordBatch};
+use polars::prelude::DataFrame;
+use polars_core::frame::ArrowChunk;
+use polars_core::utils::arrow::{array::ArrayRef, ffi};
 use pyo3::ffi::Py_uintptr_t;
 use pyo3::prelude::*;
 
 /// Arrow array to Python.
-fn to_py_array(array: ArrayRef, py: Python, pyarrow: &PyModule) -> PyResult<PyObject> {
+pub(crate) fn to_py_array(array: ArrayRef, py: Python, pyarrow: &PyModule) -> PyResult<PyObject> {
     let array_ptr = Box::new(ffi::Ffi_ArrowArray::empty());
     let schema_ptr = Box::new(ffi::Ffi_ArrowSchema::empty());
 
@@ -34,32 +35,36 @@ fn to_py_array(array: ArrayRef, py: Python, pyarrow: &PyModule) -> PyResult<PyOb
 }
 
 /// RecordBatch to Python.
-fn to_py_rb(rb: &RecordBatch, py: Python, pyarrow: &PyModule) -> PyResult<PyObject> {
-    let mut arrays = Vec::with_capacity(rb.num_columns());
-    let mut names = Vec::with_capacity(rb.num_columns());
+pub(crate) fn to_py_rb(
+    rb: &ArrowChunk,
+    names: &[&str],
+    py: Python,
+    pyarrow: &PyModule,
+) -> PyResult<PyObject> {
+    let mut arrays = Vec::with_capacity(rb.len());
 
-    let schema = rb.schema();
-    for (array, field) in rb.columns().iter().zip(schema.fields()) {
+    for array in rb.columns() {
         let array_object = to_py_array(array.clone(), py, pyarrow)?;
         arrays.push(array_object);
-        names.push(field.name());
     }
 
     let record = pyarrow
         .getattr("RecordBatch")?
-        .call_method1("from_arrays", (arrays, names))?;
+        .call_method1("from_arrays", (arrays, names.to_vec()))?;
 
     Ok(record.to_object(py))
 }
 
-pub fn to_py_arrow(df: DataFrame) -> PyResult<Vec<PyObject>> {
+pub(crate) fn df_to_py(mut df: DataFrame) -> PyResult<Vec<PyObject>> {
+    df.rechunk();
     let gil = Python::acquire_gil();
     let py = gil.python();
     let pyarrow = py.import("pyarrow")?;
+    let names = df.get_column_names();
 
     let rbs = df
-        .iter_record_batches()
-        .map(|rb| to_py_rb(&rb, py, pyarrow))
+        .iter_chunks()
+        .map(|rb| to_py_rb(&rb, &names, py, pyarrow))
         .collect::<PyResult<_>>()?;
     Ok(rbs)
 }

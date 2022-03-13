@@ -15,6 +15,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = {version="*", features=["extension-module"]}
-polars = {version="*", features=["serde"]}
-polars-core = {version="*", features=["serde"]}
+polars = {version="0.19.1", features=["serde"]}
+polars-core = {version="0.19", features=["serde"]}
 thiserror = {version="*"}

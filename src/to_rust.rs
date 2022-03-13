@@ -1,38 +1,12 @@
-use std::convert::TryFrom;
-
-use polars_core::prelude::Arc;
-use polars_core::utils::arrow::{
-    array::ArrayRef,
-    datatypes::{Field, Schema},
-    ffi,
-    record_batch::RecordBatch,
-};
+use crate::error::PyPolarsErr;
+use polars_core::prelude::*;
+use polars_core::utils::accumulate_dataframes_vertical;
+use polars_core::utils::arrow::{array::ArrayRef, ffi};
 use pyo3::ffi::Py_uintptr_t;
 use pyo3::prelude::*;
+use std::convert::TryFrom;
 
-use polars::frame::DataFrame;
-use polars::prelude::PolarsError;
-use polars_core::error::ArrowError;
-use pyo3::exceptions::PyRuntimeError;
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum PyPolarsEr {
-    #[error(transparent)]
-    Any(#[from] PolarsError),
-    #[error("{0}")]
-    Other(String),
-    #[error(transparent)]
-    ArrowError(#[from] ArrowError),
-}
-
-impl std::convert::From<PyPolarsEr> for PyErr {
-    fn from(err: PyPolarsEr) -> PyErr {
-        PyRuntimeError::new_err(format!("{:?}", err))
-    }
-}
-
-fn array_to_rust(obj: &PyAny) -> PyResult<ArrayRef> {
+pub fn array_to_rust(obj: &PyAny) -> PyResult<ArrayRef> {
     // prepare a pointer to receive the Array struct
     let array = Box::new(ffi::Ffi_ArrowArray::empty());
     let schema = Box::new(ffi::Ffi_ArrowSchema::empty());
@@ -47,49 +21,35 @@ fn array_to_rust(obj: &PyAny) -> PyResult<ArrayRef> {
         (array_ptr as Py_uintptr_t, schema_ptr as Py_uintptr_t),
     )?;
 
-    let field = ffi::import_field_from_c(schema.as_ref()).map_err(PyPolarsEr::from)?;
-    let array = ffi::import_array_from_c(array, &field).map_err(PyPolarsEr::from)?;
-    Ok(array.into())
+    unsafe {
+        let field = ffi::import_field_from_c(schema.as_ref()).map_err(PyPolarsErr::from)?;
+        let array = ffi::import_array_from_c(array, &field).map_err(PyPolarsErr::from)?;
+        Ok(array.into())
+    }
 }
 
-fn to_rust_rb(rb: &[&PyAny]) -> PyResult<Vec<RecordBatch>> {
+pub fn to_rust_df(rb: &[&PyAny]) -> PyResult<DataFrame> {
     let schema = rb
         .get(0)
-        .ok_or_else(|| PyPolarsEr::Other("empty table".into()))?
+        .ok_or_else(|| PyPolarsErr::Other("empty table".into()))?
         .getattr("schema")?;
     let names = schema.getattr("names")?.extract::<Vec<String>>()?;
 
-    let arrays = rb
+    let dfs = rb
         .iter()
         .map(|rb| {
             let columns = (0..names.len())
                 .map(|i| {
                     let array = rb.call_method1("column", (i,))?;
-                    array_to_rust(array)
+                    let arr = array_to_rust(array)?;
+                    let s =
+                        Series::try_from((names[i].as_str(), arr)).map_err(PyPolarsErr::from)?;
+                    Ok(s)
                 })
                 .collect::<PyResult<_>>()?;
-            Ok(columns)
+            Ok(DataFrame::new(columns).map_err(PyPolarsErr::from)?)
         })
-        .collect::<PyResult<Vec<Vec<_>>>>()?;
+        .collect::<PyResult<Vec<_>>>()?;
 
-    let fields = arrays[0]
-        .iter()
-        .zip(&names)
-        .map(|(arr, name)| {
-            let dtype = arr.data_type().clone();
-            Field::new(name, dtype, true)
-        })
-        .collect();
-    let schema = Arc::new(Schema::new(fields));
-
-    Ok(arrays
-        .into_iter()
-        .map(|columns| RecordBatch::try_new(schema.clone(), columns).unwrap())
-        .collect())
-}
-
-pub fn to_rust_df(rb: Vec<&PyAny>) -> PyResult<DataFrame> {
-    let batches = to_rust_rb(&rb)?;
-    let df = DataFrame::try_from(batches).map_err(PyPolarsEr::from)?;
-    Ok(df)
+    Ok(accumulate_dataframes_vertical(dfs).map_err(PyPolarsErr::from)?)
 }
